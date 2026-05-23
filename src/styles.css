@@ -152,6 +152,7 @@ h1 {
 
 .sprite {
   display: block;
+  pointer-events: none;
   background-repeat: no-repeat;
   background-color: #fff;
 }
@@ -197,6 +198,7 @@ h1 {
   height: 210px;
   display: grid;
   place-items: center;
+  isolation: isolate;
 }
 
 .preview-base {
@@ -223,6 +225,29 @@ h1 {
   box-shadow: inset -10px -10px 0 rgba(35, 96, 120, 0.08), 0 12px 24px rgba(35, 96, 120, 0.16);
 }
 
+.empty-ice {
+  position: absolute;
+  bottom: 72px;
+  width: 132px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  border: 4px dashed rgba(53, 112, 138, 0.24);
+  border-radius: 70px 70px 36px 36px;
+  color: rgba(53, 112, 138, 0.42);
+  background: rgba(226, 249, 251, 0.48);
+}
+
+.empty-base {
+  position: absolute;
+  bottom: 0;
+  width: 170px;
+  height: 82px;
+  border: 4px dashed rgba(53, 112, 138, 0.24);
+  border-radius: 12px 12px 46px 46px;
+  background: rgba(255, 250, 241, 0.7);
+}
+
 .preview-topping {
   position: absolute;
   z-index: 2;
@@ -232,6 +257,121 @@ h1 {
   border-radius: 8px;
   background-color: transparent;
   transform: rotate(-5deg);
+}
+
+.preview-base-drawing {
+  position: absolute;
+  bottom: 5px;
+  width: 162px;
+  height: 92px;
+  z-index: 1;
+}
+
+.preview-base-drawing::before,
+.preview-base-drawing::after,
+.preview-base-drawing span {
+  content: "";
+  position: absolute;
+  display: block;
+}
+
+.preview-base-drawing::before {
+  inset: 18px 8px 0;
+  border: 5px solid rgba(82, 91, 114, 0.16);
+  box-shadow: inset 0 -10px 0 rgba(255, 255, 255, 0.22), 0 12px 18px rgba(70, 109, 123, 0.14);
+}
+
+.base-purple-shell::before,
+.base-yellow-shell::before {
+  border-radius: 12px 12px 76px 76px;
+  background: linear-gradient(160deg, #f0c7ff, #9d72dd);
+}
+
+.base-yellow-shell::before {
+  background: linear-gradient(160deg, #fff1a2, #f3bf38);
+}
+
+.base-purple-shell span,
+.base-yellow-shell span {
+  left: 24px;
+  right: 24px;
+  bottom: 15px;
+  height: 54px;
+  border-radius: 0 0 70px 70px;
+  background: repeating-radial-gradient(ellipse at 50% 10%, rgba(255, 255, 255, 0.7) 0 4px, transparent 5px 14px);
+  opacity: 0.55;
+}
+
+.base-waffle::before {
+  inset: 8px 31px 0;
+  border-radius: 12px 12px 48px 48px;
+  background:
+    linear-gradient(60deg, transparent 43%, rgba(121, 76, 34, 0.38) 44% 48%, transparent 49%),
+    linear-gradient(120deg, transparent 43%, rgba(121, 76, 34, 0.38) 44% 48%, transparent 49%),
+    linear-gradient(160deg, #f6bd5d, #c4792e);
+  background-size: 22px 22px, 22px 22px, 100% 100%;
+  clip-path: polygon(8% 0, 92% 0, 68% 100%, 32% 100%);
+}
+
+.base-pink-cup::before,
+.base-teal-cup::before {
+  inset: 10px 28px 0;
+  border-radius: 12px 12px 36px 36px;
+  background: linear-gradient(160deg, #ffd4df, #f090a9);
+  clip-path: polygon(0 0, 100% 0, 84% 100%, 16% 100%);
+}
+
+.base-teal-cup::before {
+  background: linear-gradient(160deg, #9beef2, #35b8c6);
+}
+
+.base-coconut::before {
+  inset: 22px 12px 0;
+  border-radius: 12px 12px 80px 80px;
+  background: linear-gradient(160deg, #ffe6be 0 45%, #8b4f25 46% 100%);
+}
+
+.preview-topping-drawing {
+  position: absolute;
+  z-index: 3;
+  bottom: 128px;
+  min-width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  color: #ff688f;
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 3px 0 #fff, 0 8px 14px rgba(41, 91, 111, 0.18);
+  transform: rotate(-9deg);
+}
+
+.topping-sprinkles {
+  color: #2ab7c9;
+}
+
+.topping-mochi {
+  color: #eeb2be;
+  font-size: 3.4rem;
+}
+
+.topping-cherry {
+  color: #e53c48;
+}
+
+.topping-fish {
+  color: #f2644f;
+  transform: rotate(10deg);
+}
+
+.topping-umbrella {
+  color: #f5c342;
+  font-size: 3.6rem;
+}
+
+.topping-flower {
+  color: #fa80af;
 }
 
 .finished-preview {
@@ -508,7 +648,8 @@ h1 {
     height: 170px;
   }
 
-  .preview-base {
+  .preview-base,
+  .preview-base-drawing {
     width: 136px;
   }
 
@@ -518,9 +659,27 @@ h1 {
     bottom: 58px;
   }
 
+  .empty-ice {
+    width: 112px;
+    height: 82px;
+    bottom: 58px;
+  }
+
+  .empty-base {
+    width: 136px;
+    height: 66px;
+  }
+
   .preview-topping {
     width: 74px;
     bottom: 108px;
+  }
+
+  .preview-topping-drawing {
+    bottom: 105px;
+    height: 46px;
+    min-width: 46px;
+    font-size: 2.5rem;
   }
 
   .action-row {

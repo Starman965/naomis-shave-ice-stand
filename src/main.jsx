@@ -35,6 +35,15 @@ const toppings = [
   { id: 'flower', name: 'Flower Candy', grid: [3, 2] }
 ];
 
+const toppingSymbols = {
+  sprinkles: '✿',
+  mochi: '□',
+  cherry: '●',
+  fish: '◖',
+  umbrella: '☂',
+  flower: '✽'
+};
+
 const customers = [
   { name: 'Kiki', face: '🌺', wants: ['yellow-shell', 'mango', 'umbrella'], treat: 2 },
   { name: 'Lani', face: '🐢', wants: ['teal-cup', 'blue', 'fish'], treat: 3 },
@@ -44,10 +53,10 @@ const customers = [
   { name: 'Kai', face: '🍍', wants: ['waffle', 'pineapple', 'sprinkles'], treat: 0 }
 ];
 
-const starter = {
-  base: bases[0].id,
-  flavor: flavors[0].id,
-  topping: toppings[0].id
+const emptySelection = {
+  base: null,
+  flavor: null,
+  topping: null
 };
 
 function nextCustomer(current) {
@@ -69,6 +78,22 @@ function TreatSprite({ index, className = '' }) {
   const x = index % 3;
   const y = Math.floor(index / 3);
   return <Sprite src={treatsSheet} cols={3} rows={2} grid={[x, y]} className={className} label="finished shaved ice" />;
+}
+
+function PreviewBase({ base }) {
+  return (
+    <div className={`preview-base-drawing base-${base.id}`} aria-label={base.name} role="img">
+      <span />
+    </div>
+  );
+}
+
+function PreviewTopping({ topping }) {
+  return (
+    <div className={`preview-topping-drawing topping-${topping.id}`} aria-label={topping.name} role="img">
+      {toppingSymbols[topping.id]}
+    </div>
+  );
 }
 
 function OptionButton({ item, selected, onPick, sheet, cols, rows }) {
@@ -122,38 +147,46 @@ function BuildPreview({ selection, matchedTreat }) {
   const base = bases.find((item) => item.id === selection.base);
   const flavor = flavors.find((item) => item.id === selection.flavor);
   const topping = toppings.find((item) => item.id === selection.topping);
+  const hasStarted = base || flavor || topping;
   return (
     <div className="build-preview" aria-label="Your shaved ice">
       <div className="preview-stack">
         {matchedTreat == null ? (
           <>
-            <Sprite src={flavorsSheet} cols={4} rows={3} grid={topping.grid} className="preview-topping" label={topping.name} />
-            <div className="ice-dome" style={{ '--ice-color': flavor.color }}>
-              <Sparkles size={30} strokeWidth={2.6} />
-            </div>
-            <Sprite src={basesSheet} cols={3} rows={2} grid={base.grid} className="preview-base" label={base.name} />
+            {topping ? <PreviewTopping topping={topping} /> : null}
+            {flavor ? (
+              <div className="ice-dome" style={{ '--ice-color': flavor.color }}>
+                <Sparkles size={30} strokeWidth={2.6} />
+              </div>
+            ) : (
+              <div className="empty-ice">
+                <Sparkles size={26} strokeWidth={2.4} />
+              </div>
+            )}
+            {base ? <PreviewBase base={base} /> : <div className="empty-base" />}
           </>
         ) : (
           <TreatSprite index={matchedTreat} className="finished-preview" />
         )}
       </div>
-      <p>{matchedTreat == null ? 'Your icee' : 'So pretty!'}</p>
+      <p>{matchedTreat == null ? (hasStarted ? 'Your icee' : 'Pick pictures') : 'So pretty!'}</p>
     </div>
   );
 }
 
 function App() {
-  const [selection, setSelection] = useState(starter);
+  const [selection, setSelection] = useState(emptySelection);
   const [customerIndex, setCustomerIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [message, setMessage] = useState('Pick three pictures, then make the icee.');
   const [matchedTreat, setMatchedTreat] = useState(null);
   const customer = customers[customerIndex];
 
-  const isMatch = useMemo(
-    () => customer.wants.includes(selection.base) && customer.wants.includes(selection.flavor) && customer.wants.includes(selection.topping),
-    [customer, selection]
-  );
+  const hasAllChoices = Boolean(selection.base && selection.flavor && selection.topping);
+  const isMatch = useMemo(() => {
+    const [wantedBase, wantedFlavor, wantedTopping] = customer.wants;
+    return selection.base === wantedBase && selection.flavor === wantedFlavor && selection.topping === wantedTopping;
+  }, [customer, selection]);
 
   function pick(kind, id) {
     setSelection((current) => ({ ...current, [kind]: id }));
@@ -162,6 +195,12 @@ function App() {
   }
 
   function makeIce() {
+    if (!hasAllChoices) {
+      setMessage('Pick one cup, one ice, and one fun topping.');
+      setMatchedTreat(null);
+      return;
+    }
+
     if (isMatch) {
       setScore((current) => current + 1);
       setMatchedTreat(customer.treat);
@@ -169,8 +208,7 @@ function App() {
       window.setTimeout(() => {
         const next = nextCustomer(customerIndex);
         setCustomerIndex(next);
-        const [base, flavor, topping] = customers[next].wants;
-        setSelection({ base, flavor, topping });
+        setSelection(emptySelection);
         setMatchedTreat(null);
         setMessage('New friend is ready.');
       }, 1400);
@@ -181,7 +219,7 @@ function App() {
   }
 
   function resetGame() {
-    setSelection(starter);
+    setSelection(emptySelection);
     setCustomerIndex(0);
     setScore(0);
     setMatchedTreat(null);
@@ -203,12 +241,12 @@ function App() {
           </div>
         </header>
 
-        <OrderCard customer={customer} status={isMatch ? 'ready' : ''} />
+        <OrderCard customer={customer} status={hasAllChoices && isMatch ? 'ready' : ''} />
 
         <div className="counter-zone">
           <BuildPreview selection={selection} matchedTreat={matchedTreat} />
-          <div className={`message-bubble ${isMatch ? 'ready' : ''}`}>
-            {isMatch ? <Check size={23} /> : <PartyPopper size={23} />}
+          <div className={`message-bubble ${hasAllChoices && isMatch ? 'ready' : ''}`}>
+            {hasAllChoices && isMatch ? <Check size={23} /> : <PartyPopper size={23} />}
             <span>{message}</span>
           </div>
         </div>
