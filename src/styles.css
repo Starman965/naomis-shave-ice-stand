@@ -27,11 +27,11 @@ button {
 }
 
 .app-shell {
-  width: min(100vw, 1180px);
+  width: min(100vw, 2200px, calc((100svh - 16px) * 2.45));
   height: 100svh;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(260px, 27vw, 284px);
+  grid-template-columns: minmax(0, 1fr) clamp(260px, 22vw, 380px);
   gap: 8px;
   padding: 8px;
   align-content: center;
