@@ -10,6 +10,7 @@ import treatsSheet from './assets/finished-treats-sheet.png';
 import containerSelectSound from './assets/sounds/container-select.mp3';
 import iceSelectSound from './assets/sounds/ice-select.mp3';
 import toppingSelectSound from './assets/sounds/topping-select.mp3';
+import incorrectSelectSound from './assets/sounds/incorrect-select.mp3';
 import buildCompleteSound from './assets/sounds/build-complete.mp3';
 import victoryVoice1 from './assets/sounds/voices/voice-1.mp3';
 import victoryVoice2 from './assets/sounds/voices/voice-2.mp3';
@@ -65,6 +66,12 @@ const pickSounds = {
   base: containerSelectSound,
   flavor: iceSelectSound,
   topping: toppingSelectSound
+};
+
+const wantIndexByKind = {
+  base: 0,
+  flavor: 1,
+  topping: 2
 };
 
 const victoryVoiceSounds = [victoryVoice1, victoryVoice2, victoryVoice3, victoryVoice4, victoryVoice5, victoryVoice6, victoryVoice7];
@@ -250,6 +257,11 @@ function App() {
 
   function pick(kind, id) {
     setRoundStartedAt((current) => current ?? Date.now());
+    if (customer.wants[wantIndexByKind[kind]] !== id) {
+      playSound(incorrectSelectSound);
+      return;
+    }
+
     setSelection((current) => ({ ...current, [kind]: id }));
     setMatchedTreat(null);
     playSound(pickSounds[kind]);
