@@ -11,6 +11,13 @@ import containerSelectSound from './assets/sounds/container-select.mp3';
 import iceSelectSound from './assets/sounds/ice-select.mp3';
 import toppingSelectSound from './assets/sounds/topping-select.mp3';
 import buildCompleteSound from './assets/sounds/build-complete.mp3';
+import victoryVoice1 from './assets/sounds/voices/voice-1.mp3';
+import victoryVoice2 from './assets/sounds/voices/voice-2.mp3';
+import victoryVoice3 from './assets/sounds/voices/voice-3.mp3';
+import victoryVoice4 from './assets/sounds/voices/voice-4.mp3';
+import victoryVoice5 from './assets/sounds/voices/voice-5.mp3';
+import victoryVoice6 from './assets/sounds/voices/voice-6.mp3';
+import victoryVoice7 from './assets/sounds/voices/voice-7.mp3';
 
 const bases = [
   { id: 'purple-shell', name: 'Purple Shell', grid: [0, 0] },
@@ -59,6 +66,8 @@ const pickSounds = {
   flavor: iceSelectSound,
   topping: toppingSelectSound
 };
+
+const victoryVoiceSounds = [victoryVoice1, victoryVoice2, victoryVoice3, victoryVoice4, victoryVoice5, victoryVoice6, victoryVoice7];
 
 function playSound(src) {
   const audio = new Audio(src);
@@ -256,7 +265,10 @@ function App() {
       setElapsedMs(roundStartedAt == null ? 0 : Date.now() - roundStartedAt);
       setRoundStartedAt(null);
       setMatchedTreat(customer.treat);
-      playSound(buildCompleteSound);
+      playSound(randomItem(victoryVoiceSounds));
+      window.setTimeout(() => {
+        playSound(buildCompleteSound);
+      }, 2000);
       window.setTimeout(() => {
         setScore((current) => current + 1);
       }, 1200);
