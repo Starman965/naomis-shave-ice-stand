@@ -124,13 +124,11 @@ h1 {
   z-index: 3;
   top: 70px;
   right: 10px;
-  width: min(38vw, 260px);
+  width: fit-content;
   min-width: 0;
-  display: grid;
-  grid-template-columns: 48px 1fr;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
+  max-width: min(42vw, 280px);
+  display: block;
+  padding: 10px;
   border-radius: 8px;
   background: rgba(255, 253, 244, 0.92);
   border: 4px solid #fff;
@@ -141,27 +139,19 @@ h1 {
   border-color: #7fd982;
 }
 
-.customer-face {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: #dff7f4;
-  font-size: 1.8rem;
-}
-
 .order-line {
-  margin: 0 0 5px;
+  margin: 0 0 7px;
   color: #2f6578;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 900;
+  text-align: left;
 }
 
 .needs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
+  grid-template-columns: repeat(3, auto);
+  justify-content: start;
+  gap: 7px;
 }
 
 .sprite {
@@ -172,7 +162,7 @@ h1 {
 }
 
 .need-sprite {
-  width: 42px;
+  width: 58px;
   aspect-ratio: 1;
   border-radius: 8px;
   border: 2px solid rgba(53, 135, 153, 0.18);
@@ -874,7 +864,7 @@ h1 {
   }
 
   .order-card {
-    width: 300px;
+    max-width: min(42vw, 300px);
     top: 96px;
   }
 
@@ -939,16 +929,10 @@ h1 {
     top: 84px;
     left: 10px;
     right: 10px;
-    width: auto;
+    width: fit-content;
     min-width: 0;
-    grid-template-columns: 54px 1fr;
+    max-width: calc(100vw - 20px);
     padding: 9px;
-  }
-
-  .customer-face {
-    width: 52px;
-    height: 52px;
-    font-size: 2rem;
   }
 
   .order-line {

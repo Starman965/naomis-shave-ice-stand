@@ -148,7 +148,6 @@ function MiniNeed({ id }) {
 function OrderCard({ customer, status }) {
   return (
     <aside className={`order-card ${status}`}>
-      <div className="customer-face" aria-hidden="true">{customer.face}</div>
       <div>
         <p className="order-line">{customer.name} wants</p>
         <div className="needs">
