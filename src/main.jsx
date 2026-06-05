@@ -1,12 +1,16 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Check, Heart, PartyPopper, RefreshCcw, Sparkles } from 'lucide-react';
+import { Heart, Sparkles, Timer } from 'lucide-react';
 import './styles.css';
 
 import standScene from './assets/stand-scene.png';
 import basesSheet from './assets/bases-sheet.png';
 import flavorsSheet from './assets/flavors-toppings-sheet.png';
 import treatsSheet from './assets/finished-treats-sheet.png';
+import containerSelectSound from './assets/sounds/container-select.mp3';
+import iceSelectSound from './assets/sounds/ice-select.mp3';
+import toppingSelectSound from './assets/sounds/topping-select.mp3';
+import buildCompleteSound from './assets/sounds/build-complete.mp3';
 
 const bases = [
   { id: 'purple-shell', name: 'Purple Shell', grid: [0, 0] },
@@ -35,22 +39,13 @@ const toppings = [
   { id: 'flower', name: 'Flower Candy', grid: [3, 2] }
 ];
 
-const toppingSymbols = {
-  sprinkles: '✿',
-  mochi: '□',
-  cherry: '●',
-  fish: '◖',
-  umbrella: '☂',
-  flower: '✽'
-};
-
 const customers = [
-  { name: 'Kiki', face: '🌺', wants: ['yellow-shell', 'mango', 'umbrella'], treat: 2 },
-  { name: 'Lani', face: '🐢', wants: ['teal-cup', 'blue', 'fish'], treat: 3 },
-  { name: 'Malia', face: '⭐', wants: ['pink-cup', 'strawberry', 'cherry'], treat: 1 },
-  { name: 'Nalu', face: '🌈', wants: ['purple-shell', 'grape', 'mochi'], treat: 5 },
-  { name: 'Pua', face: '🌸', wants: ['coconut', 'lime', 'flower'], treat: 4 },
-  { name: 'Kai', face: '🍍', wants: ['waffle', 'pineapple', 'sprinkles'], treat: 0 }
+  { name: 'Kiki', face: '🌺' },
+  { name: 'Lani', face: '🐢' },
+  { name: 'Malia', face: '⭐' },
+  { name: 'Nalu', face: '🌈' },
+  { name: 'Pua', face: '🌸' },
+  { name: 'Kai', face: '🍍' }
 ];
 
 const emptySelection = {
@@ -59,8 +54,47 @@ const emptySelection = {
   topping: null
 };
 
-function nextCustomer(current) {
-  return (current + 1) % customers.length;
+const pickSounds = {
+  base: containerSelectSound,
+  flavor: iceSelectSound,
+  topping: toppingSelectSound
+};
+
+function playSound(src) {
+  const audio = new Audio(src);
+  audio.volume = 0.75;
+  audio.play().catch(() => {
+    // Some browsers block audio until a user gesture; picks happen from taps/clicks.
+  });
+}
+
+function formatElapsed(ms) {
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+function randomItem(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function randomItemExcept(items, excluded) {
+  const choices = items.filter((item) => item !== excluded);
+  return randomItem(choices.length ? choices : items);
+}
+
+function makeRound(previousRound = null) {
+  const character = randomItemExcept(customers, customers.find((customer) => customer.name === previousRound?.name));
+  let wants = [];
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    wants = [randomItem(bases).id, randomItem(flavors).id, randomItem(toppings).id];
+    if (wants.join('|') !== previousRound?.wants.join('|')) break;
+  }
+
+  return {
+    ...character,
+    wants,
+    treat: Math.floor(Math.random() * 6)
+  };
 }
 
 function Sprite({ src, cols, rows, grid, className = '', label }) {
@@ -78,22 +112,6 @@ function TreatSprite({ index, className = '' }) {
   const x = index % 3;
   const y = Math.floor(index / 3);
   return <Sprite src={treatsSheet} cols={3} rows={2} grid={[x, y]} className={className} label="finished shaved ice" />;
-}
-
-function PreviewBase({ base }) {
-  return (
-    <div className={`preview-base-drawing base-${base.id}`} aria-label={base.name} role="img">
-      <span />
-    </div>
-  );
-}
-
-function PreviewTopping({ topping }) {
-  return (
-    <div className={`preview-topping-drawing topping-${topping.id}`} aria-label={topping.name} role="img">
-      {toppingSymbols[topping.id]}
-    </div>
-  );
 }
 
 function OptionButton({ item, selected, onPick, sheet, cols, rows }) {
@@ -143,44 +161,69 @@ function OrderCard({ customer, status }) {
   );
 }
 
+function PreviewPickSlot({ item, sheet, cols, rows }) {
+  return (
+    <div className={`preview-pick-slot ${item ? 'filled' : ''}`}>
+      {item ? <Sprite src={sheet} cols={cols} rows={rows} grid={item.grid} label={item.name} /> : <Sparkles size={30} strokeWidth={2.2} />}
+    </div>
+  );
+}
+
 function BuildPreview({ selection, matchedTreat }) {
   const base = bases.find((item) => item.id === selection.base);
   const flavor = flavors.find((item) => item.id === selection.flavor);
   const topping = toppings.find((item) => item.id === selection.topping);
-  const hasStarted = base || flavor || topping;
   return (
     <div className="build-preview" aria-label="Your shaved ice">
-      <div className="preview-stack">
-        {matchedTreat == null ? (
-          <>
-            {topping ? <PreviewTopping topping={topping} /> : null}
-            {flavor ? (
-              <div className="ice-dome" style={{ '--ice-color': flavor.color }}>
-                <Sparkles size={30} strokeWidth={2.6} />
-              </div>
-            ) : (
-              <div className="empty-ice">
-                <Sparkles size={26} strokeWidth={2.4} />
-              </div>
-            )}
-            {base ? <PreviewBase base={base} /> : <div className="empty-base" />}
-          </>
-        ) : (
+      {matchedTreat == null ? (
+        <div className="preview-picks">
+          <PreviewPickSlot item={base} sheet={basesSheet} cols={3} rows={2} />
+          <PreviewPickSlot item={flavor} sheet={flavorsSheet} cols={4} rows={3} />
+          <PreviewPickSlot item={topping} sheet={flavorsSheet} cols={4} rows={3} />
+        </div>
+      ) : (
+        <div className="preview-stack">
           <TreatSprite index={matchedTreat} className="finished-preview" />
-        )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Celebration({ treat }) {
+  return (
+    <div className="celebration" aria-label="Happy celebration">
+      <div className="confetti-field" aria-hidden="true">
+        <span>✦</span>
+        <span>●</span>
+        <span>♥</span>
+        <span>✿</span>
+        <span>★</span>
+        <span>●</span>
+        <span>♥</span>
+        <span>✦</span>
       </div>
-      <p>{matchedTreat == null ? (hasStarted ? 'Your icee' : 'Pick pictures') : 'So pretty!'}</p>
+      <div className="celebration-card">
+        <Sparkles className="celebration-sparkle left" size={54} />
+        <TreatSprite index={treat} className="celebration-treat" />
+        <Sparkles className="celebration-sparkle right" size={54} />
+        <div className="celebration-hearts" aria-hidden="true">
+          <span>♥</span>
+          <span>♥</span>
+          <span>♥</span>
+        </div>
+      </div>
     </div>
   );
 }
 
 function App() {
   const [selection, setSelection] = useState(emptySelection);
-  const [customerIndex, setCustomerIndex] = useState(0);
+  const [customer, setCustomer] = useState(() => makeRound());
   const [score, setScore] = useState(0);
-  const [message, setMessage] = useState('Pick three pictures, then make the icee.');
   const [matchedTreat, setMatchedTreat] = useState(null);
-  const customer = customers[customerIndex];
+  const [roundStartedAt, setRoundStartedAt] = useState(null);
+  const [elapsedMs, setElapsedMs] = useState(0);
 
   const hasAllChoices = Boolean(selection.base && selection.flavor && selection.topping);
   const isMatch = useMemo(() => {
@@ -188,42 +231,45 @@ function App() {
     return selection.base === wantedBase && selection.flavor === wantedFlavor && selection.topping === wantedTopping;
   }, [customer, selection]);
 
+  useEffect(() => {
+    if (roundStartedAt == null || matchedTreat != null) return undefined;
+
+    const tick = () => setElapsedMs(Date.now() - roundStartedAt);
+    tick();
+    const timer = window.setInterval(tick, 100);
+    return () => window.clearInterval(timer);
+  }, [matchedTreat, roundStartedAt]);
+
   function pick(kind, id) {
+    setRoundStartedAt((current) => current ?? Date.now());
     setSelection((current) => ({ ...current, [kind]: id }));
     setMatchedTreat(null);
-    setMessage('Good pick. Add the other pictures.');
+    playSound(pickSounds[kind]);
   }
 
   function makeIce() {
     if (!hasAllChoices) {
-      setMessage('Pick one cup, one ice, and one fun topping.');
       setMatchedTreat(null);
       return;
     }
 
     if (isMatch) {
-      setScore((current) => current + 1);
+      setElapsedMs(roundStartedAt == null ? 0 : Date.now() - roundStartedAt);
+      setRoundStartedAt(null);
       setMatchedTreat(customer.treat);
-      setMessage('You made a happy icee!');
+      playSound(buildCompleteSound);
       window.setTimeout(() => {
-        const next = nextCustomer(customerIndex);
-        setCustomerIndex(next);
+        setScore((current) => current + 1);
+      }, 1200);
+      window.setTimeout(() => {
+        setCustomer((current) => makeRound(current));
         setSelection(emptySelection);
         setMatchedTreat(null);
-        setMessage('New friend is ready.');
-      }, 1400);
+        setElapsedMs(0);
+      }, 3200);
     } else {
-      setMessage('Almost. Match the three pictures.');
       setMatchedTreat(null);
     }
-  }
-
-  function resetGame() {
-    setSelection(emptySelection);
-    setCustomerIndex(0);
-    setScore(0);
-    setMatchedTreat(null);
-    setMessage('Pick three pictures, then make the icee.');
   }
 
   return (
@@ -235,31 +281,35 @@ function App() {
             <span className="brand-shell" aria-hidden="true">✦</span>
             <h1>Naomi's Shave Ice Stand</h1>
           </div>
-          <div className="score" aria-label={`${score} happy hearts`}>
-            <Heart fill="currentColor" size={23} />
+          <div className={`score ${matchedTreat != null ? 'score-pop' : ''}`} aria-label={`${score} happy hearts`}>
+            <Heart fill="currentColor" size={32} />
             <span>{score}</span>
           </div>
         </header>
 
         <OrderCard customer={customer} status={hasAllChoices && isMatch ? 'ready' : ''} />
+        <div className={`timer-badge ${roundStartedAt != null ? 'running' : ''} ${matchedTreat != null ? 'finished' : ''}`} aria-label={`Time ${formatElapsed(elapsedMs)}`}>
+          <Timer size={24} />
+          <span>{formatElapsed(elapsedMs)}</span>
+        </div>
+        {matchedTreat != null ? (
+          <>
+            <Celebration treat={matchedTreat} />
+            <div className="flying-heart" aria-hidden="true">♥</div>
+          </>
+        ) : null}
 
-        <div className="counter-zone">
-          <BuildPreview selection={selection} matchedTreat={matchedTreat} />
-          <div className={`message-bubble ${hasAllChoices && isMatch ? 'ready' : ''}`}>
-            {hasAllChoices && isMatch ? <Check size={23} /> : <PartyPopper size={23} />}
-            <span>{message}</span>
+        {matchedTreat == null ? (
+          <div className="lower-ui">
+            <BuildPreview selection={selection} matchedTreat={matchedTreat} />
+            <div className="action-row">
+              <button className="make-button" onClick={makeIce}>
+                <Sparkles size={30} />
+                Make It!
+              </button>
+            </div>
           </div>
-        </div>
-
-        <div className="action-row">
-          <button className="make-button" onClick={makeIce}>
-            <Sparkles size={30} />
-            Make It!
-          </button>
-          <button className="icon-button" onClick={resetGame} aria-label="Start over">
-            <RefreshCcw size={26} />
-          </button>
-        </div>
+        ) : null}
       </section>
 
       <nav className="controls" aria-label="Shave ice choices">

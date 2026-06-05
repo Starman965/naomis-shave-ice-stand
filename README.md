@@ -15,9 +15,11 @@ Open the local URL Vite prints, usually `http://127.0.0.1:5173/`.
 
 - Match the customer's three picture requests: cup, ice flavor, topping.
 - Click **Make It!** to serve the icee.
-- A happy heart is added for a correct match.
-- The next customer appears automatically.
-- The reset button starts over.
+- A happy heart is added with a celebratory animation for a correct match.
+- Each new customer/order is randomized.
+- A small timer tracks how long each successful build takes.
+- Tap sounds play for each selection and a victory chime plays for a correct build.
+- The next customer appears automatically after the celebration.
 
 ## Art
 
